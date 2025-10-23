@@ -35,12 +35,11 @@ exports.checkInOut = async (req, res) => {
     }
 
     let responseMessage = "";
-    let normalMode = true; // to decide whether to send only name or message
+    let normalMode = true;
 
     // -------- RESTRICTIONS --------
     if (user.UserType !== "master" && user.Emergency !== true) {
       if ((type === "in" || type === "out") && hour >= 10 && hour < 13) {
-        normalMode = false;
         return res.status(403).json({
           message: "Access restricted between 10 AM and 1 PM.",
           time: formattedTime,
@@ -49,7 +48,6 @@ exports.checkInOut = async (req, res) => {
       }
 
       if ((type === "in" || type === "out") && hour >= 14 && hour < 18) {
-        normalMode = false;
         return res.status(403).json({
           message: "Cannot check in-out between 2 PM and 6 PM.",
           time: formattedTime,
@@ -58,7 +56,6 @@ exports.checkInOut = async (req, res) => {
       }
 
       if (type === "out" && hour < 18 && hour < 13) {
-        normalMode = false;
         return res.status(403).json({
           message: "Cannot check out before 6 PM. Complete shift.",
           time: formattedTime,
@@ -69,7 +66,7 @@ exports.checkInOut = async (req, res) => {
 
     // -------- EMERGENCY ACCESS --------
     if (user.Emergency === true) {
-      responseMessage = `${user.UserName} used emergency access.`;
+      responseMessage = `${user.UserName.split(" ")[0]} used emergency access.`;
       normalMode = false;
       await UserRegistry.update({ Emergency: false }, { where: { RfidNumber: RN } });
     }
@@ -94,15 +91,17 @@ exports.checkInOut = async (req, res) => {
     );
 
     // -------- RESPONSE --------
+    const firstName = user.UserName.split(" ")[0];
+
     if (normalMode) {
-      // Normal case → send only name
+      // Normal case → send only first name
       return res.json({
-        name: user.UserName,
+        name: firstName,
         time: formattedTime,
         valid: true,
       });
     } else {
-      // Message case → send full message
+      // Message case → send message
       return res.json({
         message: responseMessage,
         time: formattedTime,

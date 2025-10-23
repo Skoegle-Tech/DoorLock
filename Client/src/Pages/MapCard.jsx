@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { useLocation } from "react-router-dom";
 
-const BASE_URL = "http://localhost:3000";
+const BASE_URL = "http://13.213.143.244:3000";
 
 export default function MapCard() {
   const location = useLocation();

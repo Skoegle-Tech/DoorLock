@@ -16,84 +16,65 @@ exports.checkInOut = async (req, res) => {
     const user = await UserRegistry.findOne({ where: { RfidNumber: RN } });
     const card = await CardRegistry.findOne({ where: { RfidNumber: RN } });
 
-    if (!user || !card)
-      return res.status(404).json({ message: "Card Not Found", time: formattedTime });
+    // -------- IF CARD OR USER NOT FOUND --------
+    if (!user || !card) {
+      return res.status(404).json({
+        message: "Card not found or not assigned",
+        time: formattedTime,
+        valid: false,
+      });
+    }
 
-    if (!card.isActive)
-      return res.status(403).json({ message: "Card access removed", time: formattedTime });
+    // -------- IF CARD INACTIVE --------
+    if (!card.isActive) {
+      return res.status(403).json({
+        message: "Card access removed",
+        time: formattedTime,
+        valid: false,
+      });
+    }
 
     let responseMessage = "";
+    let normalMode = true; // to decide whether to send only name or message
 
-    // ---------------- RESTRICTIONS ----------------
+    // -------- RESTRICTIONS --------
     if (user.UserType !== "master" && user.Emergency !== true) {
-      // STRICT restriction from 10 AM to 1 PM for both check-in/out
-      if ((type === "in" || type === "out") && hour >= 10 && hour < 13)
+      if ((type === "in" || type === "out") && hour >= 10 && hour < 13) {
+        normalMode = false;
         return res.status(403).json({
           message: "Access restricted between 10 AM and 1 PM.",
-            time: formattedTime,
+          time: formattedTime,
+          valid: false,
         });
+      }
 
-      // Allow lunch check-in/out between 1–2 PM
-      if ((type === "out" || type === "in") && hour >= 13 && hour < 14)
-        responseMessage = "Lunchtime check-in-out allowed";
-
-      // Restrict check-in/out between 2 PM and 6 PM
-      if ((type === "in" || type === "out") && hour >= 14 && hour < 18)
+      if ((type === "in" || type === "out") && hour >= 14 && hour < 18) {
+        normalMode = false;
         return res.status(403).json({
           message: "Cannot check in-out between 2 PM and 6 PM.",
-            time: formattedTime,
+          time: formattedTime,
+          valid: false,
         });
+      }
 
-      // Restrict early checkout before 6 PM (except lunch)
-      if (type === "out" && hour < 18 && hour < 13)
+      if (type === "out" && hour < 18 && hour < 13) {
+        normalMode = false;
         return res.status(403).json({
           message: "Cannot check out before 6 PM. Complete shift.",
-            time: formattedTime,
+          time: formattedTime,
+          valid: false,
         });
-    }
-
-    // ---------------- EMERGENCY HANDLING ----------------
-    if (user.Emergency === true) {
-      responseMessage = `${user.UserName}, using emergency access. ${
-        type === "in" ? "Check-In successful" : "Check-Out successful"
-      }`;
-      await UserRegistry.update({ Emergency: false }, { where: { RfidNumber: RN } });
-    }
-
-    // ---------------- FRIENDLY MESSAGES ----------------
-    if (!responseMessage) {
-      if (type === "in") {
-        if (hour >= 6 && hour < 10)
-          responseMessage = `Good morning, ${user.UserName}! Welcome`;
-        else if (hour >= 12 && hour < 14)
-          responseMessage = `Welcome back, ${user.UserName}! Lunch`;
-        else if (hour >= 18 && hour < 22)
-          responseMessage = `Evening check-in, ${user.UserName}`;
-        else
-          responseMessage = `Check-In, ${user.UserName}`;
-      } else if (type === "out") {
-        if (hour >= 18 && hour < 20)
-          responseMessage = `Thank you, ${user.UserName}! Goodbye`;
-        else if (hour >= 13 && hour < 14)
-          responseMessage = `${user.UserName}, heading out for lunch?`;
-        else
-          responseMessage = `${user.UserName} checked out successfully`;
       }
     }
 
-    // ---------------- NEXT CHECK SUGGESTION ----------------
-    if (type === "in") {
-      responseMessage += " Next checkout at 6 PM";
-    } else if (type === "out" && hour >= 13 && hour < 14) {
-      responseMessage += " Next checkout after lunch";
+    // -------- EMERGENCY ACCESS --------
+    if (user.Emergency === true) {
+      responseMessage = `${user.UserName} used emergency access.`;
+      normalMode = false;
+      await UserRegistry.update({ Emergency: false }, { where: { RfidNumber: RN } });
     }
 
-    // Truncate to 40 characters
-    if (responseMessage.length > 40) {
-      responseMessage = responseMessage.slice(0, 37) + "...";
-    }
-
-    // ---------------- DATABASE UPDATES ----------------
+    // -------- DATABASE UPDATES --------
     await UserActivityLog.create({
       RfidNumber: RN,
       UserId: user.UserId,
@@ -112,11 +93,22 @@ exports.checkInOut = async (req, res) => {
       { where: { RfidNumber: RN } }
     );
 
-    res.json({
-      message: responseMessage,
-      time: formattedTime,
-      valid: true,
-    });
+    // -------- RESPONSE --------
+    if (normalMode) {
+      // Normal case → send only name
+      return res.json({
+        name: user.UserName,
+        time: formattedTime,
+        valid: true,
+      });
+    } else {
+      // Message case → send full message
+      return res.json({
+        message: responseMessage,
+        time: formattedTime,
+        valid: true,
+      });
+    }
   } catch (e) {
     console.error("Error in checkInOut:", e);
     res.status(500).json({ error: e.message });

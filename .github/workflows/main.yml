@@ -23,17 +23,23 @@ jobs:
           node-version: 18
 
       - name: Install dependencies
-        run: npm install
+        run: |
+          cd app
+          npm install
 
       - name: EAS Login
-        run: eas login --token ${{ secrets.EXPO_TOKEN }}
+        run: |
+          cd app
+          eas login --token ${{ secrets.EXPO_TOKEN }}
 
       - name: Build Android
-        run: eas build -p android --profile production --non-interactive
+        run: |
+          cd app
+          eas build -p android --profile production --non-interactive
 
       - name: Upload artifact
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: android-build
           path: |
-            ./build
+            ./app/build

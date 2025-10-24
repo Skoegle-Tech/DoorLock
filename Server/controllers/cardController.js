@@ -45,8 +45,9 @@ exports.cardStatus = async (req, res) => {
   try {
     const { RfidNumber } = req.query;
     const card = await CardRegistry.findOne({ where: { RfidNumber } });
+    const user = await UserRegistry.findOne({ where: { RfidNumber } });
     if (!card) return res.status(404).json({ message: "Card not found" });
-    res.json({ isActive: card.isActive });
+    res.json({ isActive: card.isActive, userType: user ? user.UserType : null });
   } catch (e) {
     res.status(500).json({ error: e.message });
   }

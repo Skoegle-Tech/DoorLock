@@ -66,3 +66,24 @@ exports.SetEmergencyStatus = async (req, res) => {
     res.status(500).json({ error: error.message });
   }
 }
+
+
+exports.MakeMasterUser= async (req, res) => {
+  try {
+    const { UserId } = req.query;
+    await UserRegistry.update({ UserType: "master" }, { where: { UserId } });
+    res.json({ message: "User promoted to master" });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+}
+
+exports.RemoveMasterUser= async (req, res) => {
+  try {
+    const { UserId } = req.query;
+    await UserRegistry.update({ UserType: "employee" }, { where: { UserId } });
+    res.json({ message: "User demoted from master" });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+}

@@ -96,7 +96,7 @@ exports.checkInOut = async (req, res) => {
     if (normalMode) {
       // Normal case → send only first name
       return res.json({
-        name: firstName,
+        message: firstName,
         time: formattedTime,
         valid: true,
       });

@@ -469,7 +469,7 @@ export default function Map() {
           {/* Activity Logs Section */}
           <Card style={styles.card}>
             <Card.Content>
-              <View style={styles.cardHeader}>
+              <View style={styles.cardHeader}>  
                 <Title style={styles.cardTitle}>Activity Logs</Title>
                 <Text>{`Page ${logPage} of ${totalLogPages}`}</Text>
               </View>

@@ -7,7 +7,7 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack';
 // Screens
 import Home from './Screens/Home';
 import MapCard from './Screens/Map';
-
+import ReadNfc from './Screens/ReadNfc';
 const Stack = createNativeStackNavigator();
 
 export default function App() {
@@ -71,6 +71,14 @@ export default function App() {
             component={MapCard}
             options={{
               title: 'Mapped NFC Cards',
+            }}
+          />
+          {/* ReadNfc Screen */}
+          <Stack.Screen
+            name="ReadNfc"
+            component={ReadNfc}
+            options={{
+              title: 'Read NFC Card',
             }}
           />
         </Stack.Navigator>

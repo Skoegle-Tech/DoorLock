@@ -97,6 +97,14 @@ function Home() {
           value={searchQuery}
           style={styles.searchBar}
         />
+           <Button
+          mode="contained"
+          icon="nfc"
+          onPress={() => navigation.navigate("ReadNfc")}
+          style={styles.nfcButton}
+        >
+          Register NFC Card
+        </Button>
       </View>
       
       {loading ? (

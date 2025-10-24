@@ -30,7 +30,7 @@ export default function App() {
           resizeMode="contain"
         />
         <Text style={styles.appName}>TapTrack</Text>
-        <Text style={styles.tagline}>Smart NFC Check-in & Check-out</Text>
+        {/* <Text style={styles.tagline}>Smart NFC Check-in & Check-out</Text> */}
       </View>
     );
   }

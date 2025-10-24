@@ -14,22 +14,27 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+      # Step 1: Checkout the repository
       - name: Checkout repository
         uses: actions/checkout@v3
 
+      # Step 2: Set up Node.js
       - name: Set up Node.js
         uses: actions/setup-node@v3
         with:
           node-version: 18
 
+      # Step 3: Install project dependencies
       - name: Install dependencies
         run: |
           cd app
           npm install
 
+      # Step 4: Install EAS CLI globally
       - name: Install EAS CLI
         run: npm install -g eas-cli
 
+      # Step 5: Build Android using EAS (non-interactive, authenticated via EXPO_TOKEN)
       - name: Build Android
         env:
           EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
@@ -37,6 +42,7 @@ jobs:
           cd app
           eas build -p android --profile production --non-interactive
 
+      # Step 6: Upload build artifact (optional, adjust path if needed)
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:

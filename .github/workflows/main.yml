@@ -27,6 +27,9 @@ jobs:
           cd app
           npm install
 
+      - name: Install EAS CLI
+        run: npm install -g eas-cli
+
       - name: EAS Login
         run: |
           cd app

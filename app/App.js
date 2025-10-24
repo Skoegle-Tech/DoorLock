@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { StyleSheet, View, Image, Text, StatusBar } from 'react-native';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
-import { SafeAreaProvider } from 'react-native-safe-area-context';
+
 
 // Screens
 import Home from './Screens/Home';
@@ -37,7 +37,7 @@ export default function App() {
 
   // Main Navigation
   return (
-    <SafeAreaProvider>
+  
       <NavigationContainer>
         <StatusBar barStyle="light-content" backgroundColor="#000" />
         <Stack.Navigator
@@ -75,7 +75,7 @@ export default function App() {
           />
         </Stack.Navigator>
       </NavigationContainer>
-    </SafeAreaProvider>
+ 
   );
 }
 

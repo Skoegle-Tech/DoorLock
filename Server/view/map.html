@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Employee Card Mapping</title>
+<style>
+  body { font-family: Arial, sans-serif; background-color: #f5f5f5; margin:0; padding:0;}
+  .container { max-width: 900px; margin: auto; padding: 16px;}
+  .card { background-color: #fff; border-radius: 10px; padding: 16px; margin-bottom: 16px; box-shadow: 0 2px 6px rgba(0,0,0,0.1);}
+  .header { display: flex; align-items: center; margin-bottom: 12px;}
+  .avatar { width: 60px; height: 60px; border-radius: 50%; background-color: #6200ee; color: #fff; display:flex; align-items:center; justify-content:center; font-size:20px; font-weight:bold;}
+  .employee-info { margin-left: 12px; flex:1;}
+  .chips { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px;}
+  .chip { border: 1px solid #ccc; border-radius: 16px; padding: 4px 8px; font-size: 12px; display: inline-block;}
+  .section-title { font-weight: bold; margin-bottom: 8px; font-size: 16px;}
+  .badge { display: inline-block; padding: 2px 8px; border-radius: 4px; color: #fff; font-size: 12px; margin-bottom: 8px;}
+  .badge.active { background-color: #4caf50;}
+  .badge.inactive { background-color: #f44336;}
+  .btn { padding: 8px 12px; margin: 4px; border:none; border-radius: 4px; cursor:pointer; color:#fff;}
+  .btn-primary { background-color: #6200ee;}
+  .btn-warning { background-color: #ffc107; color:#000;}
+  .btn-danger { background-color: #f44336;}
+  .btn-info { background-color: #17a2b8;}
+  .dropdown { position: relative; margin-bottom: 12px;}
+  .dropdown-btn { padding: 8px 12px; border: 1px solid #ccc; border-radius: 4px; width: 100%; cursor:pointer; display:flex; justify-content:space-between; align-items:center; background-color:#fff;}
+  .dropdown-list { position: absolute; top:100%; left:0; right:0; background-color:#fff; border:1px solid #ccc; max-height:150px; overflow-y:auto; z-index:100;}
+  .dropdown-item { padding: 8px 12px; cursor:pointer;}
+  .dropdown-item:hover { background-color: #f0f0f0;}
+  table { width: 100%; border-collapse: collapse; margin-top:8px;}
+  th, td { border: 1px solid #ddd; padding: 8px; text-align:left;}
+  th { background-color: #f0f0f0;}
+  .chip-status { padding: 2px 6px; border-radius: 4px; color:#fff; font-size:10px; display:inline-block;}
+  .chip-status.checkin { background-color: #4caf50;}
+  .chip-status.checkout { background-color: #f44336;}
+  .pagination { margin-top: 8px; display:flex; justify-content:center; gap:8px;}
+</style>
+</head>
+<body>
+<div class="container">
+  <div id="employeeCard" class="card"></div>
+  <div id="mappedCardSection"></div>
+  <div id="mapNewCardSection"></div>
+  <div id="realtimeStatusSection"></div>
+  <div id="activityLogsSection"></div>
+</div>
+
+<script>
+const BASE_URL = "http://13.213.143.244:3000";
+let employee = {
+  name: "John Doe",
+  designation: "Software Engineer",
+  department: "IT",
+  employeeNumber: "12345",
+  email: "john@example.com"
+}; // Example employee, replace with dynamic route data
+let mappedCard = null;
+let availableCards = [];
+let selectedCard = "";
+let isActive = true;
+let logs = [];
+let logPage = 1;
+let totalLogPages = 1;
+const LOGS_LIMIT = 5;
+
+function renderEmployeeCard() {
+  const container = document.getElementById('employeeCard');
+  const initials = employee.name.split(' ').map(n=>n[0]).join('').substring(0,2).toUpperCase();
+  container.innerHTML = `
+    <div class="header">
+      <div class="avatar">${initials}</div>
+      <div class="employee-info">
+        <div style="font-weight:bold;font-size:18px;">${employee.name}</div>
+        <div style="font-size:14px;">${employee.designation} • ${employee.department}</div>
+        <div class="chips">
+          <div class="chip">ID: ${employee.employeeNumber}</div>
+          <div class="chip">Email: ${employee.email.split('@')[0]}</div>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+function renderMappedCard() {
+  const container = document.getElementById('mappedCardSection');
+  if(!mappedCard) {
+    container.innerHTML = '';
+    renderMapNewCard();
+    return;
+  }
+  container.innerHTML = `
+    <div class="card">
+      <div class="section-title">Card Information</div>
+      <div class="badge ${isActive?'active':'inactive'}">${isActive?'ACTIVE':'INACTIVE'}</div>
+      <div>RFID: ${mappedCard.RfidNumber}</div>
+      <div>UserID: ${mappedCard.UserId}</div>
+      <div>UserType: ${mappedCard.UserType||'N/A'}</div>
+      <div style="margin-top:8px;">
+        <button class="btn btn-danger" onclick="handleUnmap()">Unmap</button>
+        <button class="btn ${isActive?'btn-warning':'btn-primary'}" onclick="handleToggleActivation()">${isActive?'Deactivate':'Activate'}</button>
+        <button class="btn btn-info" onclick="handleEmergencyPass()">Emergency</button>
+      </div>
+    </div>
+  `;
+}
+
+function renderMapNewCard() {
+  const container = document.getElementById('mapNewCardSection');
+  container.innerHTML = `
+    <div class="card">
+      <div class="section-title">Map New Card</div>
+      <div class="dropdown">
+        <div class="dropdown-btn" onclick="toggleDropdown()">
+          <span>${selectedCard||'Select a card'}</span>
+          <span>▼</span>
+        </div>
+        <div id="dropdownList" class="dropdown-list" style="display:none;">
+          ${availableCards.length>0 ? availableCards.map(c=>`<div class="dropdown-item" onclick="selectCard('${c.RfidNumber}')">${c.RfidNumber}</div>`).join(''):'<div style="padding:8px;">No cards available</div>'}
+        </div>
+      </div>
+      <button class="btn btn-primary" onclick="handleMap()" ${!selectedCard?'disabled':''}>Map User to Card</button>
+    </div>
+  `;
+}
+
+function toggleDropdown(){
+  const list = document.getElementById('dropdownList');
+  list.style.display = list.style.display==='none'?'block':'none';
+}
+
+function selectCard(cardId){
+  selectedCard = cardId;
+  renderMapNewCard();
+}
+
+function handleMap(){
+  if(!selectedCard){ alert('Select a card'); return;}
+  alert('Mapped '+selectedCard+' to user');
+  mappedCard = {RfidNumber:selectedCard, UserId:employee.employeeNumber};
+  isActive = true;
+  renderMappedCard();
+}
+
+function handleUnmap(){
+  mappedCard = null;
+  selectedCard = "";
+  renderMappedCard();
+}
+
+function handleToggleActivation(){
+  isActive = !isActive;
+  renderMappedCard();
+}
+
+function handleEmergencyPass(){
+  alert('Emergency pass generated!');
+}
+
+function renderRealtimeStatus(){
+  const container = document.getElementById('realtimeStatusSection');
+  container.innerHTML = `
+    <div class="card">
+      <div class="section-title">Realtime Status</div>
+      <div>User: ${employee.name}</div>
+      <div>Status: <span class="chip-status checkin">CHECK-IN</span></div>
+      <div style="display:flex;gap:8px;margin-top:8px;">
+        <div>Check In: 09:00 AM</div>
+        <div>Check Out: 05:00 PM</div>
+      </div>
+    </div>
+  `;
+}
+
+function renderActivityLogs(){
+  const container = document.getElementById('activityLogsSection');
+  container.innerHTML = `
+    <div class="card">
+      <div class="section-title">Activity Logs</div>
+      <table>
+        <tr><th>Type</th><th>Time</th></tr>
+        ${logs.map(log=>`<tr>
+          <td><span class="chip-status ${log.type==='check-in'?'checkin':'checkout'}">${log.type.toUpperCase()}</span></td>
+          <td>${log.time}</td>
+        </tr>`).join('')}
+      </table>
+      <div class="pagination">
+        <button class="btn btn-primary" onclick="prevPage()" ${logPage===1?'disabled':''}>Prev</button>
+        <span>Page ${logPage} of ${totalLogPages}</span>
+        <button class="btn btn-primary" onclick="nextPage()" ${logPage===totalLogPages?'disabled':''}>Next</button>
+      </div>
+    </div>
+  `;
+}
+
+function prevPage(){ logPage=Math.max(1,logPage-1); renderActivityLogs();}
+function nextPage(){ logPage=Math.min(totalLogPages,logPage+1); renderActivityLogs();}
+
+// Initial render
+renderEmployeeCard();
+renderMappedCard();
+renderRealtimeStatus();
+logs=[{type:'check-in',time:'09:00 AM'},{type:'check-out',time:'05:00 PM'}];
+renderActivityLogs();
+availableCards=[{RfidNumber:'CARD001'},{RfidNumber:'CARD002'}];
+renderMapNewCard();
+</script>
+</body>
+</html>

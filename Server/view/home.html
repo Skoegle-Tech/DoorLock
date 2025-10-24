@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Employee Directory</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      background-color: #f5f5f5;
+    }
+
+    header {
+      background-color: #fff;
+      padding: 16px;
+      box-shadow: 0 2px 3px rgba(0,0,0,0.1);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+
+    header h1 {
+      margin: 0 0 12px 0;
+      font-size: 24px;
+    }
+
+    #searchBar {
+      width: 100%;
+      padding: 8px 12px;
+      font-size: 16px;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+    }
+
+    #employeeList {
+      display: flex;
+      flex-wrap: wrap;
+      padding: 16px;
+      gap: 16px;
+      justify-content: center;
+    }
+
+    .card {
+      background-color: #fff;
+      border-radius: 8px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+      padding: 16px;
+      width: 300px;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .card h2 {
+      margin: 0 0 8px 0;
+      font-size: 18px;
+      font-weight: bold;
+    }
+
+    .detail-row {
+      display: flex;
+      justify-content: space-between;
+      margin-top: 8px;
+    }
+
+    .detail-column {
+      flex: 1;
+    }
+
+    .label {
+      font-size: 12px;
+      color: #666;
+      margin-bottom: 2px;
+    }
+
+    .map-button {
+      margin-top: 12px;
+      padding: 8px;
+      background-color: #6200ee;
+      color: #fff;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      text-align: center;
+    }
+
+    .map-button:hover {
+      background-color: #3700b3;
+    }
+
+    #loading {
+      text-align: center;
+      margin-top: 50px;
+      font-size: 16px;
+    }
+
+    #noResults {
+      text-align: center;
+      margin-top: 50px;
+      font-size: 18px;
+      color: #666;
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <h1>Employee Directory</h1>
+    <input type="text" id="searchBar" placeholder="Search employees...">
+  </header>
+
+  <div id="loading">Loading employees...</div>
+  <div id="employeeList"></div>
+  <div id="noResults" style="display:none;">No employees found</div>
+
+  <script>
+    const API_URL = "http://13.213.143.244:3001/api";
+    const employeeList = document.getElementById('employeeList');
+    const searchBar = document.getElementById('searchBar');
+    const loadingDiv = document.getElementById('loading');
+    const noResultsDiv = document.getElementById('noResults');
+
+    let employees = [];
+    let filteredEmployees = [];
+
+    async function fetchEmployees() {
+      try {
+        const response = await fetch(API_URL);
+        const data = await response.json();
+        employees = data;
+        filteredEmployees = data;
+        loadingDiv.style.display = 'none';
+        renderEmployees(filteredEmployees);
+      } catch (err) {
+        console.error("Failed to fetch employees:", err);
+        loadingDiv.textContent = "Failed to load employees.";
+      }
+    }
+
+    function renderEmployees(list) {
+      employeeList.innerHTML = '';
+      if (list.length === 0) {
+        noResultsDiv.style.display = 'block';
+        return;
+      } else {
+        noResultsDiv.style.display = 'none';
+      }
+
+      list.forEach(emp => {
+        const card = document.createElement('div');
+        card.className = 'card';
+
+        card.innerHTML = `
+          <h2>${emp.name}</h2>
+          <div class="detail-row">
+            <div class="detail-column">
+              <div class="label">Designation</div>
+              <div>${emp.designation}</div>
+            </div>
+            <div class="detail-column">
+              <div class="label">Department</div>
+              <div>${emp.department}</div>
+            </div>
+          </div>
+          <div class="detail-row">
+            <div class="detail-column">
+              <div class="label">Employee Number</div>
+              <div>${emp.employeeNumber}</div>
+            </div>
+            <div class="detail-column">
+              <div class="label">Email</div>
+              <div>${emp.email}</div>
+            </div>
+          </div>
+          <button class="map-button" onclick="openMap('${emp.id}')">Map</button>
+        `;
+
+        employeeList.appendChild(card);
+      });
+    }
+
+    function openMap(employeeId) {
+      // Replace with actual navigation or map functionality
+      alert("Open map for employee ID: " + employeeId);
+    }
+
+    searchBar.addEventListener('input', (e) => {
+      const query = e.target.value.toLowerCase();
+      if (!query) {
+        filteredEmployees = employees;
+      } else {
+        filteredEmployees = employees.filter(emp =>
+          emp.name.toLowerCase().includes(query) ||
+          emp.department.toLowerCase().includes(query) ||
+          emp.employeeNumber.toString().includes(query)
+        );
+      }
+      renderEmployees(filteredEmployees);
+    });
+
+    fetchEmployees();
+  </script>
+
+</body>
+</html>

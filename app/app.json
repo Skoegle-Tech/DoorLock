@@ -1,14 +1,14 @@
 {
   "expo": {
-    "name": "app",
-    "slug": "app",
+    "name": "TapTrack",
+    "slug": "TapTrack",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/icon.png",
+    "icon": "./assets/taptrack.png",
     "userInterfaceStyle": "light",
     "newArchEnabled": true,
     "splash": {
-      "image": "./assets/splash-icon.png",
+      "image": "./assets/taptrack.png",
       "resizeMode": "contain",
       "backgroundColor": "#ffffff"
     },
@@ -17,14 +17,19 @@
     },
     "android": {
       "adaptiveIcon": {
-        "foregroundImage": "./assets/adaptive-icon.png",
+        "foregroundImage": "./assets/taptrack.png",
         "backgroundColor": "#ffffff"
       },
       "edgeToEdgeEnabled": true,
-      "package": "com.swarupn046.app"
+      "package": "com.taptrack.app"
     },
     "web": {
-      "favicon": "./assets/favicon.png"
+      "favicon": "./assets/taptrack.png"
+    },
+    "extra": {
+      "eas": {
+        "projectId": "1e2f3ba9-cc64-49b9-8857-7dfcb1927e6e"
+      }
     }
   }
 }

@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
-const API_URL = "http://13.213.143.244:3001/api";
+const API_URL = "https://payslip.skoegle.com/api";
 
 function Home() {
   const [employees, setEmployees] = useState([]);

@@ -3,7 +3,7 @@ import { View, StyleSheet, FlatList, SafeAreaView, ActivityIndicator } from 'rea
 import { Card, Title, Paragraph, Button, DataTable, Text, Divider, Searchbar, useTheme } from 'react-native-paper';
 import { useNavigation } from '@react-navigation/native';
 
-const API_URL = "http://13.213.143.244:3001/api";
+const API_URL = "https://payslip.skoegle.com/api";
 
 function Home() {
   const [employees, setEmployees] = useState([]);

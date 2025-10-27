@@ -32,6 +32,12 @@ jobs:
           cache: 'npm'
           cache-dependency-path: server/package-lock.json
 
+      - name: Create .env file
+        run: |
+          echo "DATABASE_URL=${{ secrets.DATABASE_URL }}" >> .env
+          echo "DATABASE_URL2=${{ secrets.DATABASE_URL2 }}" >> .env
+          cat .env  # Optional: For debugging (remove in production)
+
       - name: Install dependencies
         run: npm ci
 

@@ -1,20 +1,27 @@
-import React, { useEffect, useState } from 'react';
-import { View, StyleSheet, ScrollView, TouchableOpacity, RefreshControl } from 'react-native';
-import { useRoute } from '@react-navigation/native';
-import { 
-  Card, 
-  Title, 
-  Paragraph, 
-  Button, 
-  ActivityIndicator, 
-  Text, 
-  Divider, 
-  Chip, 
-  Portal, 
-  Modal, 
-  Provider, 
-  Surface, 
-  List, 
+import React, { useEffect, useState } from "react";
+import {
+  View,
+  StyleSheet,
+  ScrollView,
+  TouchableOpacity,
+  RefreshControl,
+} from "react-native";
+import { useRoute } from "@react-navigation/native";
+import axios from "axios";
+import {
+  Card,
+  Title,
+  Paragraph,
+  Button,
+  ActivityIndicator,
+  Text,
+  Divider,
+  Chip,
+  Portal,
+  Modal,
+  Provider,
+  Surface,
+  List,
   Appbar,
   Avatar,
   Badge,
@@ -25,12 +32,10 @@ import {
   Switch,
   SegmentedButtons,
   useTheme,
-  TextInput
-} from 'react-native-paper';
-
+  TextInput,
+} from "react-native-paper";
 
 const BASE_URL = "https://taptrack.skoegle.com";
-
 
 export default function Map() {
   const route = useRoute();
@@ -45,7 +50,7 @@ export default function Map() {
   const [realtimeStatus, setRealtimeStatus] = useState(null);
   const [loading, setLoading] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
-  
+
   // Dropdown state
   const [showDropdown, setShowDropdown] = useState(false);
   const [dropdownText, setDropdownText] = useState("Select a card");
@@ -99,6 +104,31 @@ export default function Map() {
     }
   }
 
+  async function ManageUser() {
+    setLoading(true);
+    console.log("mappedCard", mappedCard?.UserType);
+    try {
+      if (mappedCard?.UserType === "master") {
+        await axios.get(
+          `${BASE_URL}/user/removeMaster?UserId=${employee.employeeNumber}`
+        );
+        alert("✅ master removed successfully!");
+        return;
+      }
+        await axios.get(
+          `${BASE_URL}/user/makemaster?UserId=${employee.employeeNumber}`
+        );
+        alert("✅ master set successfully!");
+      
+    } catch (error) {
+      alert("An error occurred while managing user.");
+    } finally {
+      setLoading(false);
+      checkMapping(employee.employeeNumber);
+      
+    }
+  }
+
   async function fetchAvailableCards() {
     try {
       const res = await fetch(`${BASE_URL}/card/cards`);
@@ -112,7 +142,9 @@ export default function Map() {
 
   async function fetchCardStatus(RfidNumber) {
     try {
-      const res = await fetch(`${BASE_URL}/card/status?RfidNumber=${RfidNumber}`);
+      const res = await fetch(
+        `${BASE_URL}/card/status?RfidNumber=${RfidNumber}`
+      );
       const data = await res.json();
       setIsActive(data.isActive);
     } catch (err) {
@@ -255,7 +287,7 @@ export default function Map() {
       await Promise.all([
         checkMapping(employee.employeeNumber),
         fetchRealtimeStatus(),
-        fetchActivityLogs(1)
+        fetchActivityLogs(1),
       ]);
       setLogPage(1);
     }
@@ -268,15 +300,16 @@ export default function Map() {
     setShowDropdown(false);
   };
 
-  if (!employee) return (
-    <View style={styles.errorContainer}>
-      <Text style={styles.errorText}>No employee selected.</Text>
-    </View>
-  );
+  if (!employee)
+    return (
+      <View style={styles.errorContainer}>
+        <Text style={styles.errorText}>No employee selected.</Text>
+      </View>
+    );
 
   return (
-    <ScrollView 
-      style={styles.container} 
+    <ScrollView
+      style={styles.container}
       refreshControl={
         <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
       }
@@ -285,8 +318,8 @@ export default function Map() {
       <Card style={styles.card}>
         <Card.Content>
           <View style={styles.employeeHeader}>
-            <Avatar.Text 
-              size={60} 
+            <Avatar.Text
+              size={60}
               label={employee.name.substring(0, 2).toUpperCase()}
               style={{ backgroundColor: theme.colors.primary }}
             />
@@ -296,25 +329,48 @@ export default function Map() {
                 {employee.designation} • {employee.department}
               </Paragraph>
               <View style={styles.employeeChips}>
-                <Chip 
-                  icon="id-card" 
-                  mode="outlined" 
+                <Chip
+                  icon="id-card"
+                  mode="outlined"
                   style={styles.chip}
                   textStyle={styles.smallText}
                 >
                   {employee.employeeNumber}
                 </Chip>
-                <Chip 
-                  icon="email" 
-                  mode="outlined" 
+                <Chip
+                  icon="email"
+                  mode="outlined"
                   style={styles.chip}
                   textStyle={styles.smallText}
                 >
-                  {employee.email.split('@')[0]}
+                  {employee.email.split("@")[0]}
                 </Chip>
               </View>
             </View>
           </View>
+          <Divider style={styles.divider} />
+          <Button
+            mode="contained"
+            icon={
+              mappedCard?.UserType === "master"
+                ? "card-remove"
+                : "card-account-details"
+            }
+            onPress={ManageUser}
+            disabled={loading}
+            style={[
+              styles.actionButton,
+              {
+                backgroundColor:
+                  mappedCard?.UserType === "master"
+                    ? "#ffc107"
+                    : theme.colors.primary,
+              },
+            ]}
+            loading={loading}
+          >
+            {mappedCard?.UserType === "master" ? "master" : "employee"}
+          </Button>
         </Card.Content>
       </Card>
 
@@ -326,13 +382,15 @@ export default function Map() {
               <View style={styles.cardHeader}>
                 <View>
                   <Title style={styles.cardTitle}>Card Information</Title>
-                  <Badge 
-                    style={{ 
-                      backgroundColor: isActive ? theme.colors.primary : theme.colors.error,
-                      alignSelf: 'flex-start'
+                  <Badge
+                    style={{
+                      backgroundColor: isActive
+                        ? theme.colors.primary
+                        : theme.colors.error,
+                      alignSelf: "flex-start",
                     }}
                   >
-                    {isActive ? 'ACTIVE' : 'INACTIVE'}
+                    {isActive ? "ACTIVE" : "INACTIVE"}
                   </Badge>
                 </View>
                 <IconButton
@@ -342,31 +400,36 @@ export default function Map() {
                   onPress={() => checkMapping(employee.employeeNumber)}
                 />
               </View>
-              
+
               <List.Item
                 title="RFID Number"
                 description={mappedCard.RfidNumber}
-                left={props => <List.Icon {...props} icon="nfc" />}
+                left={(props) => <List.Icon {...props} icon="nfc" />}
               />
               <List.Item
                 title="User ID"
                 description={mappedCard.UserId}
-                left={props => <List.Icon {...props} icon="identifier" />}
+                left={(props) => <List.Icon {...props} icon="identifier" />}
               />
               <List.Item
                 title="User Type"
                 description={mappedCard.UserType || "N/A"}
-                left={props => <List.Icon {...props} icon="account-details" />}
+                left={(props) => (
+                  <List.Icon {...props} icon="account-details" />
+                )}
               />
               <Divider style={styles.divider} />
-              
+
               <View style={styles.actionButtonsRow}>
                 <Button
                   mode="contained"
                   icon="credit-card-remove"
                   onPress={handleUnmap}
                   disabled={loading}
-                  style={[styles.actionButton, { backgroundColor: theme.colors.error }]}
+                  style={[
+                    styles.actionButton,
+                    { backgroundColor: theme.colors.error },
+                  ]}
                   loading={loading}
                 >
                   Unmap
@@ -379,7 +442,11 @@ export default function Map() {
                   disabled={loading}
                   style={[
                     styles.actionButton,
-                    { backgroundColor: isActive ? '#ffc107' : theme.colors.primary }
+                    {
+                      backgroundColor: isActive
+                        ? "#ffc107"
+                        : theme.colors.primary,
+                    },
                   ]}
                   loading={loading}
                 >
@@ -391,7 +458,7 @@ export default function Map() {
                   icon="shield-key"
                   onPress={handleEmergencyPass}
                   disabled={loading}
-                  style={[styles.actionButton, { backgroundColor: '#17a2b8' }]}
+                  style={[styles.actionButton, { backgroundColor: "#17a2b8" }]}
                   loading={loading}
                 >
                   Emergency
@@ -402,7 +469,9 @@ export default function Map() {
                 <Surface style={styles.emergencyPassContainer} elevation={1}>
                   <Text style={styles.emergencyHeader}>Emergency Pass</Text>
                   <Text style={styles.emergencyCode}>
-                    {emergencyPass.passId || emergencyPass.code || JSON.stringify(emergencyPass)}
+                    {emergencyPass.passId ||
+                      emergencyPass.code ||
+                      JSON.stringify(emergencyPass)}
                   </Text>
                 </Surface>
               )}
@@ -421,46 +490,55 @@ export default function Map() {
                   onPress={fetchRealtimeStatus}
                 />
               </View>
-              
+
               {realtimeStatus ? (
                 <View>
                   <View style={styles.statusRow}>
                     <View style={styles.statusItem}>
                       <Text style={styles.statusLabel}>User</Text>
-                      <Text style={styles.statusValue}>{realtimeStatus.UserName}</Text>
+                      <Text style={styles.statusValue}>
+                        {realtimeStatus.UserName}
+                      </Text>
                     </View>
                     <View style={styles.statusItem}>
                       <Text style={styles.statusLabel}>Status</Text>
-                      <Chip 
+                      <Chip
                         mode="flat"
                         style={{
-                          backgroundColor: realtimeStatus.type === 'check-in' 
-                            ? '#4caf50' 
-                            : realtimeStatus.type === 'check-out' 
-                            ? '#f44336'
-                            : '#ff9800'
+                          backgroundColor:
+                            realtimeStatus.type === "check-in"
+                              ? "#4caf50"
+                              : realtimeStatus.type === "check-out"
+                              ? "#f44336"
+                              : "#ff9800",
                         }}
-                        textStyle={{ color: 'white', fontWeight: 'bold' }}
+                        textStyle={{ color: "white", fontWeight: "bold" }}
                       >
-                        {realtimeStatus.type?.toUpperCase() || 'UNKNOWN'}
+                        {realtimeStatus.type?.toUpperCase() || "UNKNOWN"}
                       </Chip>
                     </View>
                   </View>
-                  
+
                   <View style={styles.timeRow}>
                     <View style={styles.timeItem}>
                       <Text style={styles.timeLabel}>Check In</Text>
-                      <Text style={styles.timeValue}>{realtimeStatus.CardCheckInTime || 'N/A'}</Text>
+                      <Text style={styles.timeValue}>
+                        {realtimeStatus.CardCheckInTime || "N/A"}
+                      </Text>
                     </View>
                     <View style={styles.timeItem}>
                       <Text style={styles.timeLabel}>Check Out</Text>
-                      <Text style={styles.timeValue}>{realtimeStatus.CardCheckOutTime || 'N/A'}</Text>
+                      <Text style={styles.timeValue}>
+                        {realtimeStatus.CardCheckOutTime || "N/A"}
+                      </Text>
                     </View>
                   </View>
                 </View>
               ) : (
                 <View style={styles.noDataContainer}>
-                  <Text style={styles.noDataText}>No realtime data available</Text>
+                  <Text style={styles.noDataText}>
+                    No realtime data available
+                  </Text>
                 </View>
               )}
             </Card.Content>
@@ -469,11 +547,11 @@ export default function Map() {
           {/* Activity Logs Section */}
           <Card style={styles.card}>
             <Card.Content>
-              <View style={styles.cardHeader}>  
+              <View style={styles.cardHeader}>
                 <Title style={styles.cardTitle}>Activity Logs</Title>
                 <Text>{`Page ${logPage} of ${totalLogPages}`}</Text>
               </View>
-              
+
               {logsLoading ? (
                 <ActivityIndicator animating={true} style={styles.loader} />
               ) : logs.length === 0 ? (
@@ -491,21 +569,20 @@ export default function Map() {
                     {logs.map((log, index) => (
                       <DataTable.Row key={index}>
                         <DataTable.Cell>
-                          <Chip 
-                            mode="flat" 
+                          <Chip
+                            mode="flat"
                             style={{
-                              backgroundColor: log.type === 'check-in' 
-                                ? '#4caf50' 
-                                : '#f44336',
-                              height: 26
+                              backgroundColor:
+                                log.type === "check-in" ? "#4caf50" : "#f44336",
+                              height: 26,
                             }}
-                            textStyle={{ color: 'white', fontSize: 10 }}
+                            textStyle={{ color: "white", fontSize: 10 }}
                           >
                             {log.type.toUpperCase()}
                           </Chip>
                         </DataTable.Cell>
                         <DataTable.Cell>
-                          {log.CardCheckInTime || log.CardCheckOutTime || 'N/A'}
+                          {log.CardCheckInTime || log.CardCheckOutTime || "N/A"}
                         </DataTable.Cell>
                       </DataTable.Row>
                     ))}
@@ -524,8 +601,10 @@ export default function Map() {
                     <Button
                       mode="outlined"
                       icon="chevron-right"
-                      contentStyle={{ flexDirection: 'row-reverse' }}
-                      onPress={() => setLogPage(Math.min(logPage + 1, totalLogPages))}
+                      contentStyle={{ flexDirection: "row-reverse" }}
+                      onPress={() =>
+                        setLogPage(Math.min(logPage + 1, totalLogPages))
+                      }
                       disabled={logPage === totalLogPages}
                       style={styles.paginationButton}
                     >
@@ -545,17 +624,17 @@ export default function Map() {
             <Text style={styles.cardSubtitle}>
               Assign an RFID card to this employee
             </Text>
-            
+
             {/* Custom dropdown replacement for Picker */}
             <View style={styles.pickerContainer}>
-              <TouchableOpacity 
+              <TouchableOpacity
                 style={styles.dropdownButton}
                 onPress={() => setShowDropdown(!showDropdown)}
               >
                 <Text>{dropdownText}</Text>
                 <IconButton icon="chevron-down" size={20} />
               </TouchableOpacity>
-              
+
               {showDropdown && (
                 <View style={styles.dropdownItems}>
                   {availableCards.length > 0 ? (
@@ -576,7 +655,7 @@ export default function Map() {
                 </View>
               )}
             </View>
-            
+
             <Button
               mode="contained"
               icon="credit-card-plus"
@@ -597,17 +676,17 @@ export default function Map() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f5f5f5',
+    backgroundColor: "#f5f5f5",
   },
   errorContainer: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
     padding: 20,
   },
   errorText: {
     fontSize: 16,
-    color: 'red',
+    color: "red",
   },
   card: {
     marginHorizontal: 16,
@@ -616,8 +695,8 @@ const styles = StyleSheet.create({
     elevation: 2,
   },
   employeeHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
   },
   employeeDetails: {
     marginLeft: 15,
@@ -628,8 +707,8 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   employeeChips: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
+    flexDirection: "row",
+    flexWrap: "wrap",
   },
   chip: {
     marginRight: 8,
@@ -640,26 +719,26 @@ const styles = StyleSheet.create({
     fontSize: 12,
   },
   cardHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
     marginBottom: 10,
   },
   cardTitle: {
     fontSize: 18,
-    fontWeight: 'bold',
+    fontWeight: "bold",
   },
   cardSubtitle: {
     marginBottom: 16,
-    color: '#757575',
+    color: "#757575",
   },
   divider: {
     height: 1,
     marginVertical: 16,
   },
   actionButtonsRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
+    flexDirection: "row",
+    justifyContent: "space-between",
     marginTop: 8,
   },
   actionButton: {
@@ -670,22 +749,22 @@ const styles = StyleSheet.create({
     padding: 12,
     borderRadius: 8,
     marginTop: 16,
-    backgroundColor: '#e3f2fd',
+    backgroundColor: "#e3f2fd",
   },
   emergencyHeader: {
     fontSize: 14,
-    fontWeight: 'bold',
-    color: '#0d47a1',
+    fontWeight: "bold",
+    color: "#0d47a1",
     marginBottom: 4,
   },
   emergencyCode: {
     fontSize: 16,
-    fontFamily: 'monospace',
-    fontWeight: 'bold',
+    fontFamily: "monospace",
+    fontWeight: "bold",
   },
   statusRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
+    flexDirection: "row",
+    justifyContent: "space-between",
     marginBottom: 16,
   },
   statusItem: {
@@ -693,27 +772,27 @@ const styles = StyleSheet.create({
   },
   statusLabel: {
     fontSize: 12,
-    color: '#757575',
+    color: "#757575",
     marginBottom: 4,
   },
   statusValue: {
     fontSize: 16,
-    fontWeight: 'bold',
+    fontWeight: "bold",
   },
   timeRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
+    flexDirection: "row",
+    justifyContent: "space-between",
   },
   timeItem: {
     flex: 1,
     padding: 12,
     borderRadius: 8,
-    backgroundColor: '#f5f5f5',
+    backgroundColor: "#f5f5f5",
     marginHorizontal: 4,
   },
   timeLabel: {
     fontSize: 12,
-    color: '#757575',
+    color: "#757575",
     marginBottom: 4,
   },
   timeValue: {
@@ -721,59 +800,59 @@ const styles = StyleSheet.create({
   },
   noDataContainer: {
     padding: 20,
-    alignItems: 'center',
+    alignItems: "center",
   },
   noDataText: {
-    color: '#757575',
+    color: "#757575",
   },
   loader: {
     margin: 20,
   },
   pickerContainer: {
     marginVertical: 16,
-    position: 'relative',
+    position: "relative",
     zIndex: 1,
   },
   dropdownButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
     borderWidth: 1,
-    borderColor: '#e0e0e0',
+    borderColor: "#e0e0e0",
     borderRadius: 4,
     padding: 10,
     paddingLeft: 16,
   },
   dropdownItems: {
-    position: 'absolute',
-    top: '100%',
+    position: "absolute",
+    top: "100%",
     left: 0,
     right: 0,
-    backgroundColor: '#fff',
+    backgroundColor: "#fff",
     borderWidth: 1,
-    borderColor: '#e0e0e0',
+    borderColor: "#e0e0e0",
     borderRadius: 4,
     maxHeight: 200,
-    overflow: 'scroll',
+    overflow: "scroll",
     zIndex: 2,
     elevation: 3,
   },
   dropdownItem: {
     padding: 12,
     borderBottomWidth: 1,
-    borderBottomColor: '#f0f0f0',
+    borderBottomColor: "#f0f0f0",
   },
   noCardsText: {
-    textAlign: 'center',
+    textAlign: "center",
     padding: 15,
-    color: '#757575',
+    color: "#757575",
   },
   mapButton: {
     marginTop: 8,
   },
   paginationContainer: {
-    flexDirection: 'row',
-    justifyContent: 'center',
+    flexDirection: "row",
+    justifyContent: "center",
     marginTop: 16,
   },
   paginationButton: {

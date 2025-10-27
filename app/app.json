@@ -4,11 +4,11 @@
     "slug": "TapTrack",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/taptrack.png",
+    "icon": "./assets/logo.png",
     "userInterfaceStyle": "light",
     "newArchEnabled": true,
     "splash": {
-      "image": "./assets/taptrack.png",
+      "image": "./assets/logo.png",
       "resizeMode": "contain",
       "backgroundColor": "#ffffff"
     },
@@ -17,14 +17,14 @@
     },
     "android": {
       "adaptiveIcon": {
-        "foregroundImage": "./assets/taptrack.png",
+        "foregroundImage": "./assets/logo.png",
         "backgroundColor": "#ffffff"
       },
       "edgeToEdgeEnabled": true,
       "package": "com.taptrack.app"
     },
     "web": {
-      "favicon": "./assets/taptrack.png"
+      "favicon": "./assets/logo.png"
     },
     "extra": {
       "eas": {

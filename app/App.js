@@ -25,7 +25,7 @@ export default function App() {
       <View style={styles.splashContainer}>
         <StatusBar hidden />
         <Image
-          source={require('./assets/taptrack.png')}
+          source={require('./assets/logo.png')}
           style={styles.logo}
           resizeMode="contain"
         />

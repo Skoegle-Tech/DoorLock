@@ -29,3 +29,5 @@ app.get("/ping", (req, res) => {
     console.error("❌ Database connection failed:", err);
   }
 })();
+
+

@@ -1,21 +1,14 @@
-name: Node.js CI (Server)
+name: Node.js CI
 
 on:
   push:
-    branches: [ "main" ]
-    paths:
-      - 'server/**'
+    branches: ["main"]
   pull_request:
-    branches: [ "main" ]
-    paths:
-      - 'server/**'
+    branches: ["main"]
 
 jobs:
   build:
     runs-on: self-hosted
-    defaults:
-      run:
-        working-directory: server
 
     strategy:
       matrix:
@@ -30,18 +23,12 @@ jobs:
         with:
           node-version: ${{ matrix.node-version }}
           cache: 'npm'
-          cache-dependency-path: server/package-lock.json
-
-      - name: Create .env file
-        run: |
-          echo "DATABASE_URL=${{ secrets.DATABASE_URL }}" >> .env
-          echo "DATABASE_URL2=${{ secrets.DATABASE_URL2 }}" >> .env
-          cat .env  # Optional: For debugging (remove in production)
+          cache-dependency-path: package-lock.json
 
       - name: Install dependencies
         run: npm ci
 
-      # Uncomment if you want to build or test later
+      # Optional steps for future use
       # - name: Build project
       #   run: npm run build
 

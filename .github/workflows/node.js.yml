@@ -16,7 +16,7 @@ jobs:
 
     defaults:
       run:
-        working-directory: server  # All npm commands run inside /server
+        working-directory: Server  # All npm commands run inside /server
 
     steps:
       - uses: actions/checkout@v4

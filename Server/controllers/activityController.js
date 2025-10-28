@@ -15,6 +15,9 @@ exports.checkInOut = async (req, res) => {
 
     const user = await UserRegistry.findOne({ where: { RfidNumber: RN } });
     const card = await CardRegistry.findOne({ where: { RfidNumber: RN } });
+    const realtime = await UserRealtimeStatus.findOne({ where: { RfidNumber: RN } });
+
+    // console.log("Realtime Status:", realtime?.dataValues || "No Realtime Record");
 
     // -------- IF CARD OR USER NOT FOUND --------
     if (!user || !card) {
@@ -34,10 +37,7 @@ exports.checkInOut = async (req, res) => {
       });
     }
 
-    let responseMessage = "";
-    let normalMode = true;
-
-    // -------- RESTRICTIONS --------
+    // -------- RESTRICTIONS FOR TIME WINDOW --------
     if (user.UserType !== "master" && user.Emergency !== true) {
       if ((type === "in" || type === "out") && hour >= 10 && hour < 13) {
         return res.status(403).json({
@@ -64,7 +64,29 @@ exports.checkInOut = async (req, res) => {
       }
     }
 
+    // -------- NEW RESTRICTION: Prevent double IN or OUT --------
+    if (realtime && user.UserType !== "master" && user.Emergency !== true) {
+      if (type === "in" && realtime.type === "in" && !realtime.CardCheckOutTime) {
+        return res.status(403).json({
+          message: "Already checked in. Please check out first.",
+          time: formattedTime,
+          valid: false,
+        });
+      }
+
+      if (type === "out" && (!realtime.type || realtime.type !== "in" || !realtime.CardCheckInTime)) {
+        return res.status(403).json({
+          message: "Cannot check out without checking in first.",
+          time: formattedTime,
+          valid: false,
+        });
+      }
+    }
+
     // -------- EMERGENCY ACCESS --------
+    let responseMessage = "";
+    let normalMode = true;
+
     if (user.Emergency === true) {
       responseMessage = `${user.UserName.split(" ")[0]} used emergency access.`;
       normalMode = false;
@@ -84,7 +106,7 @@ exports.checkInOut = async (req, res) => {
     await UserRealtimeStatus.update(
       {
         type,
-        CardCheckInTime: type === "in" ? formattedTime : null,
+        CardCheckInTime: type === "in" ? formattedTime : realtime.CardCheckInTime,
         CardCheckOutTime: type === "out" ? formattedTime : null,
       },
       { where: { RfidNumber: RN } }
@@ -92,16 +114,13 @@ exports.checkInOut = async (req, res) => {
 
     // -------- RESPONSE --------
     const firstName = user.UserName.split(" ")[0];
-
     if (normalMode) {
-      // Normal case → send only first name
       return res.json({
         message: firstName,
         time: formattedTime,
         valid: true,
       });
     } else {
-      // Message case → send message
       return res.json({
         message: responseMessage,
         time: formattedTime,
@@ -113,7 +132,6 @@ exports.checkInOut = async (req, res) => {
     res.status(500).json({ error: e.message });
   }
 };
-
 
 
 exports.getRealtimeStatus = async (req, res) => {

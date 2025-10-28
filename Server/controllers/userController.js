@@ -87,3 +87,29 @@ exports.RemoveMasterUser= async (req, res) => {
     res.status(500).json({ error: error.message });
   }
 }
+
+
+exports.GetAllUsers = async (req, res) => {
+  try {
+    // Fetch both tables
+    const users = await UserRegistry.findAll({ raw: true });
+    const realtimeStatuses = await UserRealtimeStatus.findAll({ raw: true });
+
+    // Merge by UserId (combine common data)
+    const combined = users.map(user => {
+      const status = realtimeStatuses.find(r => r.UserId === user.UserId);
+
+      return {
+        ...user,
+        type: status ? status.type : null,
+        CardCheckInTime: status ? status.CardCheckInTime : null,
+        CardCheckOutTime: status ? status.CardCheckOutTime : null,
+      };
+    });
+
+    res.json(combined);
+  } catch (error) {
+    console.error("❌ Error fetching users:", error);
+    res.status(500).json({ error: error.message });
+  }
+};
